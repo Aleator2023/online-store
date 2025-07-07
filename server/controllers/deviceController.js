@@ -10,6 +10,7 @@ class DeviceController {
         const { img } = req.files; 
         let fileName = uuid.v4() + ".jpg"; // Generate a unique file name
         img.mv(`${path.resolve(__dirname, '..', 'static')}/${fileName}`); // Move the file to the static directory
+        const device = await Device.create({ name, price, brandId, typeId, img: fileName });
 
         if (info) {
             info = JSON.parse(info);
@@ -23,10 +24,7 @@ class DeviceController {
             ); // Parse the info if it's provided
         }
 
-        const device = await Device.create({ name, price, brandId, typeId, img: fileName });
-
-      
-
+        
         return res.json(device)
         } catch (e) {
             next(ApiError.BadRequest(e.message)); // Pass the error to the error handling middleware
@@ -62,16 +60,16 @@ async update(req, res, next) {
 
         let devices;
         if (!brandId && !typeId) {
-            devices = await Device.findAndCountAll({ where: { limit, offset }});
+            devices = await Device.findAndCountAll({limit, offset });
         }
         if (brandId && !typeId) {
-            devices = await Device.findAndCountAll({ where: { brandId, limit, offset } });
+            devices = await Device.findAndCountAll({ where: {brandId}, limit, offset });
         }
         if (!brandId && typeId) {
-            devices = await Device.findAndCountAll({ where: { typeId, limit, offset } });
+            devices = await Device.findAndCountAll({ where: {typeId}, limit, offset });
         }
         if (brandId && typeId) {
-            devices = await Device.findAndCountAll({ where: { brandId, typeId, limit, offset } });
+            devices = await Device.findAndCountAll({ where: {brandId, typeId}, limit, offset });
         }
         return res.json(devices);
     }
