@@ -1,26 +1,43 @@
-// App.js
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { authRoutes, publicRoutes } from "./routers";
+import React, { useContext, useEffect, useState } from 'react';
+import AppRouter from "./components/AppRouter";
+import NavBar from "./components/NavBar";
+import { observer } from "mobx-react-lite";
+import { Context } from "./index";
+import { check } from "./http/userAPI";
+import { Spinner } from "react-bootstrap";
 
-const App = () => {
-  const isAuth = false; // замените на проверку авторизации
+const App = observer(() => {
+    const { user } = useContext(Context);
+    const [loading, setLoading] = useState(true);
 
-  return (
-    <Routes>
-      {isAuth &&
-        authRoutes.map(({ path, element }) => (
-          <Route key={path} path={path} element={element} />
-        ))}
+    useEffect(() => {
+        check()
+            .then(data => {
+                user.setUser(data);
+                user.setIsAuth(true);
+            })
+            .catch(() => {
+                localStorage.removeItem('token');
+                user.setUser({});
+                user.setIsAuth(false);
+            })
+            .finally(() => setLoading(false));
+    }, []);
 
-      {publicRoutes.map(({ path, element }) => (
-        <Route key={path} path={path} element={element} />
-      ))}
+    if (loading) {
+        return (
+            <div style={{ height: '100vh' }} className="d-flex justify-content-center align-items-center">
+                <Spinner animation="grow" />
+            </div>
+        );
+    }
 
-      {/* редирект по умолчанию */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
-  );
-};
+    return (
+        <>
+            <NavBar />
+            <AppRouter />
+        </>
+    );
+});
 
 export default App;

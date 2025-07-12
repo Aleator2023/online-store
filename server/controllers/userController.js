@@ -89,6 +89,30 @@ class userController {
       return next(ApiError.BadRequest(e.message));
     }
   }
+  async updateUser(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { email, role, password } = req.body;
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return next(ApiError.BadRequest('User not found'));
+      }
+
+      if (email) user.email = email;
+      if (role) user.role = role;
+      if (password) {
+        const hashedPassword = await bcrypt.hash(password, 5);
+        user.password = hashedPassword;
+      }
+
+      await user.save();
+      return res.json(user);
+    } catch (e) {
+      return next(ApiError.BadRequest(e.message));
+    }
+  }
+
 }
 
 module.exports = new userController();

@@ -1,0 +1,33 @@
+version: '3.9'
+
+services:
+  server:
+    build:
+      context: ./server
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    ports:
+      - "5001:5001"
+    environment:
+      - NODE_ENV=development
+      - DB_NAME=online_store
+      - DB_USER=postgres
+      - DB_PASSWORD=Imisez1985
+      - DB_HOST=host.docker.internal  # ⬅️ Подключение к локальной БД через хост
+      - DB_PORT=5432
+      - PORT=5001
+      - SECRET_KEY=secret_key
+
+  client:
+    build:
+      context: ./client
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+    depends_on:
+      - server

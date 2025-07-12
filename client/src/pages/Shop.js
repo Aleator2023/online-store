@@ -1,25 +1,48 @@
-import React from "react";
+import React, {useContext, useEffect} from 'react';
+import {Container} from "react-bootstrap";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import TypeBar from "../components/TypeBar";
+import BrandBar from "../components/BrandBar";
+import DeviceList from "../components/DeviceList";
+import {observer} from "mobx-react-lite";
+import {Context} from "../index";
+import {fetchBrands, fetchDevices, fetchTypes} from "../http/deviceAPI";
+import Pages from "../components/Pages";
 
-const Shop = () => {
-  return (
-    <div className="container">
-      <h1 className="text-center my-4">Shop</h1>
-      <p className="text-center">Welcome to the shop! Browse our products below.</p>
-      <div className="row">
-        {/* Product cards will go here */}
-        <div className="col-md-4 mb-4">
-          <div className="card">
-            <img src="https://via.placeholder.com/150" className="card-img-top" alt="Product" />
-            <div className="card-body">
-              <h5 className="card-title">Product Name</h5>
-              <p className="card-text">$19.99</p>
-              <button className="btn btn-primary">Add to Cart</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+const Shop = observer(() => {
+    const {device} = useContext(Context)
+
+    useEffect(() => {
+        fetchTypes().then(data => device.setTypes(data))
+        fetchBrands().then(data => device.setBrands(data))
+        fetchDevices(null, null, 1, 2).then(data => {
+            device.setDevices(data.rows)
+            device.setTotalCount(data.count)
+        })
+    }, [])
+// eslint-disable-next-line react-hooks/exhaustive-deps
+    useEffect(() => {
+        fetchDevices(device.selectedType.id, device.selectedBrand.id, device.page, 2).then(data => {
+            device.setDevices(data.rows)
+            device.setTotalCount(data.count)
+        })
+    }, [device.page, device.selectedType, device.selectedBrand,])
+
+    return (
+        <Container>
+            <Row className="mt-2">
+                <Col md={3}>
+                    <TypeBar/>
+                </Col>
+                <Col md={9}>
+                    <BrandBar/>
+                    <DeviceList/>
+                    <Pages/>
+                </Col>
+            </Row>
+        </Container>
+    );
+});
 
 export default Shop;

@@ -1,24 +1,27 @@
 import React from "react";
-import { Switch, Route, Redirect } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { authRoutes, publicRoutes } from "../routers";
+import { Context } from "../index";
 
-const App = () => {
-  const isAuth = false; // заменить на актуальную проверку авторизации
+const AppRouter = () => {
+  const { user } = React.useContext(Context);
+
+  console.log(user);
 
   return (
-    <Switch>
-      { isAuth && authRoutes.map(({ path, Component }) => (
-        <Route key={path} path={path} component={Component} exact />
+    <Routes>
+      {user.isAuth &&
+        authRoutes.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
+        ))}
+
+      {publicRoutes.map(({ path, element }) => (
+        <Route key={path} path={path} element={element} />
       ))}
 
-           { publicRoutes.map(({ path, Component }) => (
-        <Route key={path} path={path} component={Component} exact />
-      ))}
-
-      <Redirect from="/" to="/shop" />
-
-    </Switch>
+      <Route path="*" element={<Navigate to="/shop" replace />} />
+    </Routes>
   );
 };
 
-export default App;
+export default AppRouter;
