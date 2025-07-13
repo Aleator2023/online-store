@@ -2,6 +2,7 @@ const uuid = require('uuid');
 const path = require('path');
 const { Device, DeviceInfo } = require('../models/models');
 const ApiError = require('../error/ApiError');
+const fs = require('fs'); // Import fs module to handle file system operations
 
 class DeviceController {
     async create(req, res, next) {
@@ -34,15 +35,39 @@ class DeviceController {
 async update(req, res, next) {
     try {
         const { id } = req.params;
-        const { typeId, brandId } = req.body;
+        let { name, price, brandId, typeId } = req.body;
+        let fileName;
 
         const device = await Device.findByPk(id);
         if (!device) {
             return next(ApiError.BadRequest('Устройство не найдено'));
         }
 
-        device.typeId = typeId ?? device.typeId;
+        // Если пришёл файл — удалить старый и сохранить новый
+        if (req.files && req.files.img) {
+            const { img } = req.files;
+            fileName = uuid.v4() + ".jpg";
+            const staticPath = path.resolve(__dirname, '..', 'static');
+
+            // Удаление старого изображения (по желанию)
+            if (device.img) {
+                const oldPath = path.join(staticPath, device.img);
+                if (fs.existsSync(oldPath)) {
+                    fs.unlinkSync(oldPath);
+                }
+            }
+
+            // Сохраняем новый файл
+            img.mv(path.join(staticPath, fileName));
+            device.img = fileName;
+        }
+
+        // Обновляем остальные поля
+        device.name = name ?? device.name;
+        device.price = price ?? device.price;
         device.brandId = brandId ?? device.brandId;
+        device.typeId = typeId ?? device.typeId;
+
         await device.save();
 
         return res.json(device);
@@ -50,7 +75,6 @@ async update(req, res, next) {
         next(ApiError.BadRequest(e.message));
     }
 }
-
 
     async getAll(req, res) {
         let { brandId, typeId, limit, page } = req.query;
